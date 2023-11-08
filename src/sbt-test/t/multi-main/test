@@ -1,0 +1,33 @@
+> teavmC
+> teavmJS
+> teavmWasm
+> teavmWasi
+
+-> teavmJS/run js
+-> teavmWasi/run wasi
+
+# TODO
+# -> teavmWasm/run wasm
+
+> cleanTestOutFiles
+
+> teavmWasi/runMain example.MainOK wasi
+> checkRunOutput wasi
+
+-> teavmWasi/runMain example.MainNG wasi
+-> teavmWasi/runMain NotExistsClassName wasi
+-> teavmWasi/runMain
+
+> cleanTestOutFiles
+
+> teavmJS/runMain example.MainOK js
+> checkRunOutput js
+
+-> teavmJS/runMain example.MainNG js
+-> teavmJS/runMain NotExistsClassName js
+-> teavmJS/runMain
+
+> cleanTestOutFiles
+
+> teavmWasm/runMain example.MainOK wasm
+> checkRunOutput wasm

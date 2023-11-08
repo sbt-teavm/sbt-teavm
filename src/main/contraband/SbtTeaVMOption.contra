@@ -1,0 +1,77 @@
+package sbtteavm
+
+@target(Scala)
+
+type SbtTeaVMBuildOption {
+   sourcesJar: [java.io.File]!
+
+   entryPointName: String!
+
+   targetDirectory: java.io.File!
+
+   sourceMapsFileGenerated: Boolean!
+
+   debugInformationGenerated: Boolean!
+
+   sourceFilesCopied: Boolean!
+
+   incremental: Boolean!
+
+   properties: SbtTeaVMBuildOption.MapStringString!
+
+   obfuscated: Boolean!
+
+   strict: Boolean!
+
+   maxTopLevelNames: Int!
+
+   transformers: [String]
+
+   optimizationLevel: org.teavm.vm.TeaVMOptimizationLevel!
+
+   fastDependencyAnalysis: Boolean!
+
+   targetFileName: String!
+
+   classesToPreserve: [String]!
+
+   cacheDirectory: java.io.File!
+
+   wasmVersion: org.teavm.backend.wasm.render.WasmBinaryVersion!
+
+   minHeapSize: Int!
+
+   maxHeapSize: Int!
+
+   heapDump: Boolean!
+
+   shortFileNames: Boolean!
+
+   assertionsRemoved: Boolean!
+
+   daemon: Boolean!
+
+   daemonMemory: Int!
+
+   version: String!
+
+   cleanTargetDirectory: Boolean!
+
+   #xtostring val c = this.getClass; c.getConstructors.head.getParameters.map(p => s"${p.getName} = ${c.getMethod(p.getName).invoke(this)}").mkString("SbtTeaVMBuildOption(", ", ", ")")
+
+   #xcompanion private type MapStringString = Map[String, String]
+}
+
+type SbtTeaVMRunOption {
+   logger: scala.sys.process.ProcessLogger!
+
+   openBrowser: Boolean!
+
+   portNumber: Int
+
+   wasiCommand: String!
+
+   puppeteerVersion: String!
+
+   #xtostring val c = this.getClass; c.getConstructors.head.getParameters.map(p => s"${p.getName} = ${c.getMethod(p.getName).invoke(this)}").mkString("SbtTeaVMRunOption(", ", ", ")")
+}

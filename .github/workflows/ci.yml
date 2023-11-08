@@ -1,0 +1,32 @@
+on:
+  pull_request:
+  push:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        java:
+        - 11
+        - 21
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v3
+      with:
+        java-version: "${{matrix.java}}"
+        distribution: adopt
+        cache: sbt
+    - run: sbt scalafmtSbt scalafixAll scalafmtAll
+    - run: git diff --exit-code
+    - uses: reviewdog/action-suggester@94877e550e6b522dc1d21231974b645ff2f084ce # v1.8.0
+      if: failure()
+      with:
+        tool_name: scala
+        fail_on_error: true
+    - uses: bytecodealliance/actions/wasmtime/setup@4ca3c24fa6343fdf26640108786a1493d1a39907 # v1.0.0
+    - run: wasmtime --version
+    - run: node --version
+    - run: npm --version
+    - run: sbt test scripted
