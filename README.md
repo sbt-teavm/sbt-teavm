@@ -2,6 +2,7 @@
 
 [![scaladex](https://index.scala-lang.org/sbt-teavm/sbt-teavm/sbt-teavm/latest.svg)](https://index.scala-lang.org/sbt-teavm/sbt-teavm/sbt-teavm)
 [![maven central](https://img.shields.io/maven-central/v/io.github.sbt-teavm/sbt-teavm_2.12_1.0.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:io.github.sbt-teavm%20AND%20a:sbt-teavm_2.12_1.0)
+[![javadoc](https://javadoc.io/badge2/io.github.sbt-teavm/sbt-teavm_2.12_1.0/javadoc.svg)](https://javadoc.io/doc/io.github.sbt-teavm/sbt-teavm_2.12_1.0/latest/sbtteavm/index.html)
 
 
 [sbt](https://www.scala-sbt.org/) plugin for [TeaVM](https://teavm.org/).
