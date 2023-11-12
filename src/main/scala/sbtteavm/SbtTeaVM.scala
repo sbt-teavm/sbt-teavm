@@ -123,67 +123,78 @@ object SbtTeaVM extends AutoPlugin {
     }
   }
 
+  private[this] val defaultConfigs = Seq(Compile, Test)
+
   override val projectSettings: Seq[Setting[?]] = Def.settings(
     libraryDependencies += excludeLibraries("org.teavm" % "teavm-classlib" % teavmBuildOption.value.version),
     buildValues.flatMap { case (x, targetType) =>
       Def.settings(
-        x / mainClass := {
-          (Compile / mainClass).value.orElse(Defaults.askForMainClass((Compile / discoveredMainClasses).value))
-        },
-        x / sourceDirectories := (Compile / sourceDirectories).value,
-        x / teavmApplySetting := {
-          val mainClassOpt = (x / mainClass).value.filter(_.nonEmpty)
-          val log = streams.value.log
-          val options = (x / teavmBuildOption).value
+        defaultConfigs.flatMap(c =>
+          inConfig(c)(
+            Def.settings(
+              c / x / mainClass := {
+                (c / mainClass).value.orElse(Defaults.askForMainClass((c / discoveredMainClasses).value))
+              },
+              c / x / sourceDirectories := (c / sourceDirectories).value,
+              x / teavmApplySetting := {
+                val mainClassOpt = (x / mainClass).value.filter(_.nonEmpty)
+                val log = streams.value.log
+                val options = (x / teavmBuildOption).value
 
-          builder => {
-            builder.setTargetType(targetType)
-            (x / sourceDirectories).?.value.getOrElse(Nil).map(_.getAbsolutePath).foreach(builder.addSourcesDirectory)
-            options.sourcesJar.map(_.getAbsolutePath).foreach(builder.addSourcesJar)
-            (x / teavmClassPathEntries).?.value
-              .map(_.map(_.getAbsolutePath).asJava)
-              .foreach(builder.setClassPathEntries)
-            mainClassOpt match {
-              case Some(mainClassName) =>
-                builder.setMainClass(mainClassName)
-              case None =>
-                log.warn(s"${mainClass.key.label} is empty")
-            }
-            builder.setEntryPointName(options.entryPointName)
-            builder.setTargetDirectory(options.targetDirectory.getAbsolutePath)
-            builder.setSourceMapsFileGenerated(options.sourceMapsFileGenerated)
-            builder.setDebugInformationGenerated(options.debugInformationGenerated)
-            builder.setSourceFilesCopied(options.sourceFilesCopied)
-            (x / teavmProgressListener).?.value.foreach(builder.setProgressListener)
-            builder.setIncremental(options.incremental)
-            val p = new Properties()
-            options.properties.foreach { case (k, v) =>
-              p.setProperty(k, v)
-            }
-            builder.setProperties(p)
-            (x / teavmLog).?.value.foreach(builder.setLog)
-            builder.setObfuscated(options.obfuscated)
-            builder.setStrict(options.strict)
-            builder.setMaxTopLevelNames(options.maxTopLevelNames)
-            builder.setTransformers(options.transformers.toArray)
-            builder.setOptimizationLevel(options.optimizationLevel)
-            builder.setFastDependencyAnalysis(options.fastDependencyAnalysis)
-            builder.setClassesToPreserve(options.classesToPreserve.toArray)
-            builder.setCacheDirectory(options.cacheDirectory.getAbsolutePath)
-            builder.setWasmVersion(options.wasmVersion)
-            builder.setMinHeapSize(options.minHeapSize)
-            builder.setMaxHeapSize(options.maxHeapSize)
-            builder.setHeapDump(options.heapDump)
-            builder.setShortFileNames(options.shortFileNames)
-            builder.setAssertionsRemoved(options.assertionsRemoved)
-            if (options.targetFileName.nonEmpty) {
-              builder.setTargetFileName(options.targetFileName)
-            }
-          }
-        }
+                builder => {
+                  builder.setTargetType(targetType)
+                  (x / sourceDirectories).?.value
+                    .getOrElse(Nil)
+                    .map(_.getAbsolutePath)
+                    .foreach(builder.addSourcesDirectory)
+                  options.sourcesJar.map(_.getAbsolutePath).foreach(builder.addSourcesJar)
+                  (x / teavmClassPathEntries).?.value
+                    .map(_.map(_.getAbsolutePath).asJava)
+                    .foreach(builder.setClassPathEntries)
+                  mainClassOpt match {
+                    case Some(mainClassName) =>
+                      builder.setMainClass(mainClassName)
+                    case None =>
+                      log.warn(s"${mainClass.key.label} is empty")
+                  }
+                  builder.setEntryPointName(options.entryPointName)
+                  builder.setTargetDirectory(options.targetDirectory.getAbsolutePath)
+                  builder.setSourceMapsFileGenerated(options.sourceMapsFileGenerated)
+                  builder.setDebugInformationGenerated(options.debugInformationGenerated)
+                  builder.setSourceFilesCopied(options.sourceFilesCopied)
+                  (x / teavmProgressListener).?.value.foreach(builder.setProgressListener)
+                  builder.setIncremental(options.incremental)
+                  val p = new Properties()
+                  options.properties.foreach { case (k, v) =>
+                    p.setProperty(k, v)
+                  }
+                  builder.setProperties(p)
+                  (x / teavmLog).?.value.foreach(builder.setLog)
+                  builder.setObfuscated(options.obfuscated)
+                  builder.setStrict(options.strict)
+                  builder.setMaxTopLevelNames(options.maxTopLevelNames)
+                  builder.setTransformers(options.transformers.toArray)
+                  builder.setOptimizationLevel(options.optimizationLevel)
+                  builder.setFastDependencyAnalysis(options.fastDependencyAnalysis)
+                  builder.setClassesToPreserve(options.classesToPreserve.toArray)
+                  builder.setCacheDirectory(options.cacheDirectory.getAbsolutePath)
+                  builder.setWasmVersion(options.wasmVersion)
+                  builder.setMinHeapSize(options.minHeapSize)
+                  builder.setMaxHeapSize(options.maxHeapSize)
+                  builder.setHeapDump(options.heapDump)
+                  builder.setShortFileNames(options.shortFileNames)
+                  builder.setAssertionsRemoved(options.assertionsRemoved)
+                  if (options.targetFileName.nonEmpty) {
+                    builder.setTargetFileName(options.targetFileName)
+                  }
+                }
+              }
+            )
+          )
+        )
       )
     },
-    teavmBuild,
+    defaultConfigs.flatMap(inConfig(_)(teavmBuild)),
     teavmDaemonLog := new DaemonLogImpl(streams.value.log),
     teavmAfterBuild := {
       val log = streams.value.log
@@ -296,44 +307,48 @@ object SbtTeaVM extends AutoPlugin {
       teavmWasm -> TeavmRun.wasm,
     ).flatMap { case (key, runImpl) =>
       inTask(key)(
-        Def.settings(
-          run := Def.inputTaskDyn {
-            import sbt.complete.DefaultParsers.*
-            val args = spaceDelimited("<arg>").parsed
-            runImpl.run(
-              args = args,
-              build = key,
-              taskName = run.key.label,
-              runLogger = teavmRunOption.value.logger,
+        defaultConfigs.flatMap(c =>
+          inConfig(c)(
+            Def.settings(
+              c / run := Def.inputTaskDyn {
+                import sbt.complete.DefaultParsers.*
+                val args = spaceDelimited("<arg>").parsed
+                runImpl.run(
+                  args = args,
+                  build = key,
+                  taskName = run.key.label,
+                  runLogger = teavmRunOption.value.logger,
+                )
+              }.evaluated,
+              c / runMain := {
+                val parser = {
+                  import sjsonnew.BasicJsonProtocol.*
+                  Defaults.loadForParser(discoveredMainClasses)((s, names) =>
+                    Defaults.runMainParser(s, names getOrElse Nil)
+                  )
+                }
+
+                Def.inputTaskDyn {
+                  val (mainClassName, args) = parser.parsed
+
+                  runImpl.run(
+                    args = args,
+                    build = Def.task {
+                      val s = state.value.appendWithSession(Seq(c / key / mainClass := Some(mainClassName)))
+                      Project.extract(s).runTask(c / key, s)._2
+                    },
+                    taskName = Keys.runMain.key.label,
+                    runLogger = teavmRunOption.value.logger,
+                  )
+                }
+              }.evaluated,
             )
-          }.evaluated,
-          runMain := {
-            val parser = {
-              import sjsonnew.BasicJsonProtocol.*
-              Defaults.loadForParser(Compile / discoveredMainClasses)((s, names) =>
-                Defaults.runMainParser(s, names getOrElse Nil)
-              )
-            }
-
-            Def.inputTaskDyn {
-              val (mainClassName, args) = parser.parsed
-
-              runImpl.run(
-                args = args,
-                build = Def.task {
-                  val s = state.value.appendWithSession(Seq(key / mainClass := Some(mainClassName)))
-                  Project.extract(s).runTask(key, s)._2
-                },
-                taskName = Keys.runMain.key.label,
-                runLogger = teavmRunOption.value.logger,
-              )
-            }
-          }.evaluated,
+          )
         )
       )
     },
     teavmLog := new TeaVMLog(streams.value.log),
-    teavmClassPathEntries := (Compile / fullClasspath).value.map(_.data),
+    defaultConfigs.flatMap(c => c / teavmClassPathEntries := (c / fullClasspath).value.map(_.data)),
     teavmTargetFileNameBase := "main",
     teavmBuildOption := SbtTeaVMBuildOption(
       sourcesJar = Vector.empty,
