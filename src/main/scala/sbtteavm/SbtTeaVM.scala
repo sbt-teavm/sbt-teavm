@@ -123,7 +123,7 @@ object SbtTeaVM extends AutoPlugin {
     }
   }
 
-  private[this] val defaultConfigs = Seq(Compile, Test)
+  private[this] val defaultConfigs: Seq[Configuration] = Seq(Compile, Test)
 
   override val projectSettings: Seq[Setting[?]] = Def.settings(
     libraryDependencies += excludeLibraries("org.teavm" % "teavm-classlib" % teavmBuildOption.value.version),
@@ -384,23 +384,25 @@ object SbtTeaVM extends AutoPlugin {
       (teavmWasm, "wasm", "wasm"),
       (teavmJS, "js", "js"),
       (teavmC, "c", ""),
-    ).map { case (k, v, ext) =>
-      k / teavmBuildOption := {
-        (k / teavmBuildOption).value
-          .withTargetDirectory(
-            crossTarget.value / "teavm" / v,
-          )
-          .withTargetFileName(
-            if (ext == "") {
-              ""
-            } else {
-              s"${teavmTargetFileNameBase.value}.${ext}"
-            }
-          )
-          .withCacheDirectory(
-            cacheDirectory = crossTarget.value / "teavm" / "cache" / v,
-          )
-      }
+    ).flatMap { case (k, v, ext) =>
+      defaultConfigs.map(c =>
+        c / k / teavmBuildOption := {
+          (c / k / teavmBuildOption).value
+            .withTargetDirectory(
+              crossTarget.value / s"${Defaults.prefix(c.name)}teavm" / v,
+            )
+            .withTargetFileName(
+              if (ext == "") {
+                ""
+              } else {
+                s"${teavmTargetFileNameBase.value}.${ext}"
+              }
+            )
+            .withCacheDirectory(
+              cacheDirectory = crossTarget.value / s"${Defaults.prefix(c.name)}teavm" / "cache" / v,
+            )
+        }
+      )
     },
     teavmProgressListener := new TeaVMProgressListener {
       override def phaseStarted(phase: TeaVMPhase, count: Int): TeaVMProgressFeedback = {
