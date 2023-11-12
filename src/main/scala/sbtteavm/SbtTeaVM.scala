@@ -388,6 +388,13 @@ object SbtTeaVM extends AutoPlugin {
       defaultConfigs.map(c =>
         c / k / teavmBuildOption := {
           (c / k / teavmBuildOption).value
+            .withEntryPointName(
+              if (c.name == Compile.name) {
+                (c / k / teavmBuildOption).value.entryPointName
+              } else {
+                c.name
+              }
+            )
             .withTargetDirectory(
               crossTarget.value / s"${Defaults.prefix(c.name)}teavm" / v,
             )
