@@ -71,55 +71,58 @@ object SbtTeaVM extends AutoPlugin {
   }
 
   private[this] val teavmBuild: Def.SettingsDefinition = Def.settings {
-    buildValues.map { case (x, targetType) =>
-      x := {
-        val buildOption = (x / teavmBuildOption).value
-        val s = (x / teavmApplySetting).value
-        val jarFiles = Def.taskDyn {
-          getJarFiles(
-            excludeLibraries(
-              "org.teavm" % "teavm-tooling" % (x / teavmBuildOption).value.version
+    buildValues.flatMap { case (x, targetType) =>
+      Def.settings(
+        x := {
+          val buildOption = (x / teavmBuildOption).value
+          val s = (x / teavmApplySetting).value
+          val jarFiles = Def.taskDyn {
+            getJarFiles(
+              excludeLibraries(
+                "org.teavm" % "teavm-tooling" % (x / teavmBuildOption).value.version
+              )
             )
-          )
-        }.value
-        val daemonLog = (x / teavmDaemonLog).value
-        val afterBuild = (x / teavmAfterBuild).value
+          }.value
+          val daemonLog = (x / teavmDaemonLog).value
+          val afterBuild = (x / teavmAfterBuild).value
 
-        if (buildOption.cleanTargetDirectory) {
-          IO.delete(buildOption.targetDirectory)
-          IO.delete(buildOption.cacheDirectory)
-        }
-
-        def build(builder: BuildStrategy): BuildResult = {
-          builder.init()
-          s.apply(builder)
-          builder.setTargetType(targetType)
-          val result = builder.build()
-          afterBuild.apply(result)
-          result
-        }
-
-        if (buildOption.daemon) {
-          val daemon = BuildDaemon.start(
-            buildOption.incremental,
-            buildOption.daemonMemory,
-            daemonLog,
-            jarFiles.map(_.getCanonicalPath).toArray*
-          )
-
-          try {
-            val registry = LocateRegistry.getRegistry("localhost", daemon.getPort)
-            val buildService = registry.lookup(RemoteBuildService.ID).asInstanceOf[RemoteBuildService]
-            val builder = new RemoteBuildStrategy(buildService)
-            build(builder)
-          } finally {
-            daemon.getProcess.destroy()
+          if (buildOption.cleanTargetDirectory) {
+            IO.delete(buildOption.targetDirectory)
+            IO.delete(buildOption.cacheDirectory)
           }
-        } else {
-          val builder = new InProcessBuildStrategy
-          build(builder)
-        }
-      }
+
+          def build(builder: BuildStrategy): BuildResult = {
+            builder.init()
+            s.apply(builder)
+            builder.setTargetType(targetType)
+            val result = builder.build()
+            afterBuild.apply(result)
+            result
+          }
+
+          if (buildOption.daemon) {
+            val daemon = BuildDaemon.start(
+              buildOption.incremental,
+              buildOption.daemonMemory,
+              daemonLog,
+              jarFiles.map(_.getCanonicalPath).toArray*
+            )
+
+            try {
+              val registry = LocateRegistry.getRegistry("localhost", daemon.getPort)
+              val buildService = registry.lookup(RemoteBuildService.ID).asInstanceOf[RemoteBuildService]
+              val builder = new RemoteBuildStrategy(buildService)
+              build(builder)
+            } finally {
+              daemon.getProcess.destroy()
+            }
+          } else {
+            val builder = new InProcessBuildStrategy
+            build(builder)
+          }
+        },
+        inConfig(Test)(inTask(x)(Defaults.testSettings))
+      )
     }
   }
 
@@ -127,6 +130,25 @@ object SbtTeaVM extends AutoPlugin {
 
   override val projectSettings: Seq[Setting[?]] = Def.settings(
     libraryDependencies += excludeLibraries("org.teavm" % "teavm-classlib" % teavmBuildOption.value.version),
+    libraryDependencies += excludeLibraries("org.teavm" % "teavm-junit" % teavmBuildOption.value.version % Test), {
+      val values = Seq[(TaskKey[BuildResult], String)](
+        teavmWasm -> "teavm.junit.wasm",
+        teavmWasi -> "teavm.junit.wasi",
+        teavmJS -> "teavm.junit.js",
+        teavmC -> "teavm.junit.c",
+      )
+      val keys = values.map(_._2).toSet
+      values.map { case (x, y) =>
+        x -> keys.map { z =>
+          z -> (z == y).toString
+        }.toList
+      }.map { case (k, v) =>
+        println((k.key.label, v))
+        (Test / k / javaOptions) ++= v.map { case (x, y) =>
+          s"-D${x}=${y}"
+        }
+      }
+    },
     buildValues.flatMap { case (x, targetType) =>
       Def.settings(
         defaultConfigs.flatMap(c =>
