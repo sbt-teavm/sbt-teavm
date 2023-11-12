@@ -1,0 +1,8 @@
+> show Test/teavmJS/javaOptions
+> show Test/teavmWasm/javaOptions
+> show Test/teavmWasi/javaOptions
+> show Test/teavmC/javaOptions
+> teavmJS/test
+> teavmWasm/test
+> teavmWasi/test
+> test

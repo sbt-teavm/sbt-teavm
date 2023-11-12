@@ -128,7 +128,10 @@ object SbtTeaVM extends AutoPlugin {
 
   private[this] val defaultConfigs: Seq[Configuration] = Seq(Compile, Test)
 
+  private[this] val asJavaProperty: ((String, String)) => String = { case (k, v) => s"-D${k}=${v}" }
+
   override val projectSettings: Seq[Setting[?]] = Def.settings(
+    libraryDependencies += "com.github.sbt" % "junit-interface" % "0.13.3" % Test,
     libraryDependencies += excludeLibraries("org.teavm" % "teavm-classlib" % teavmBuildOption.value.version),
     libraryDependencies += excludeLibraries("org.teavm" % "teavm-junit" % teavmBuildOption.value.version % Test), {
       val values = Seq[(TaskKey[BuildResult], String)](
@@ -143,11 +146,42 @@ object SbtTeaVM extends AutoPlugin {
           z -> (z == y).toString
         }.toList
       }.map { case (k, v) =>
-        println((k.key.label, v))
-        (Test / k / javaOptions) ++= v.map { case (x, y) =>
-          s"-D${x}=${y}"
-        }
+        (Test / k / javaOptions) ++= v.map(asJavaProperty)
       }
+    },
+    Test / fork := true,
+    buildValues.map(_._1).map { x =>
+      Test / x / fork := true
+    },
+    Test / javaOptions ++= Seq(
+      "teavm.junit.target" -> {
+        (crossTarget.value / "teavm-test-target").getAbsolutePath
+      },
+      "teavm.junit.sourceDirs" -> {
+        val src1 = (Compile / sourceDirectories).value
+        val src2 = (Test / sourceDirectories).value
+        Seq(src1, src2).flatten.map(_.getAbsolutePath).mkString(java.io.File.pathSeparator)
+      }
+    ).map(asJavaProperty),
+    Seq[(TaskKey[BuildResult], Map[String, String])](
+      teavmWasm -> Map(
+        "teavm.junit.wasm.runner" -> "browser-chrome"
+      ),
+      teavmWasi -> Map(
+        "teavm.junit.wasi.runner" -> "./run-wasi.sh"
+      ),
+      teavmJS -> Map(
+        "teavm.junit.js.runner" -> "browser-chrome",
+        "teavm.junit.js.decodeStack" -> "false",
+      ),
+      teavmC -> Map(
+        "teavm.junit.c.compiler" -> "compile-c-unix-fast.sh",
+      ),
+    ).map { case (k, v) =>
+      (Test / k / javaOptions) ++= v.map(asJavaProperty).toList
+    },
+    buildValues.map(_._1).flatMap { x =>
+      Defaults.testTaskOptions(x / test)
     },
     buildValues.flatMap { case (x, targetType) =>
       Def.settings(
