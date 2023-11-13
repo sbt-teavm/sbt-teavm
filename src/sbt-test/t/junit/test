@@ -8,5 +8,11 @@ $ absent target/test_log.txt
 > check isWebAssembly false
 $ delete target/test_log.txt
 
+$ absent target/test_log.txt
+> teavmJS/test
+$ delete target/test_log.txt
+
+$ absent target/test_log.txt
 > teavmTest
 > checkAll
+$ delete target/test_log.txt

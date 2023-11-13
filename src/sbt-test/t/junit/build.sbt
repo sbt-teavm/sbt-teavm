@@ -25,15 +25,10 @@ Test / forkOptions := (
 InputKey[Unit]("check") := {
   import sbt.complete.DefaultParsers.*
 
-  val values = Seq(
-    "isWebAssembly",
-    "isJavaScript",
-    "isC",
-  )
   val (arg, success) = ((token(Space) ~> token(StringBasic)) ~ (token(Space) ~> token(Bool))).parsed
   val actual = IO.readLines(testLogFile.value).filterNot(_ contains "chrome")
   val x = List(
-    s"(os,TeaVM),(class,foo.Test1),${values.map { x => x -> (arg == x) }.mkString(",")}",
+    arg
   ) ++ {
     if (success) List("SUCCESS") else Nil
   }
@@ -43,9 +38,7 @@ InputKey[Unit]("check") := {
 
 TaskKey[Unit]("checkAll") := {
   val actual = IO.readLines(testLogFile.value).filterNot(_ contains "chrome")
-  val expect = List.fill(2)(
-    "(os,TeaVM),(class,foo.Test1),(isWebAssembly,true),(isJavaScript,false),(isC,false)"
-  )
+  val expect = List.fill(2)("isWebAssembly")
   assert(actual == expect, s" '${actual}' != '${expect}' ")
 }
 

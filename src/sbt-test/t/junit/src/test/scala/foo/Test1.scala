@@ -10,16 +10,17 @@ import org.teavm.classlib.PlatformDetector.*
 @RunWith(classOf[TeaVMTestRunner])
 class Test1 {
 
+  private def osname(): String = System.getProperty("os.name")
   private def showInfo(): String = Seq(
-    "os" -> System.getProperty("os.name"),
-    "class" -> this.getClass.getName,
     "isWebAssembly" -> isWebAssembly(),
     "isJavaScript" -> isJavaScript(),
     "isC" -> isC(),
-  ).mkString(",")
+  ).filter(_._2).map(_._1).mkString(",")
 
   @Test
   def x1(): Unit = {
     println(showInfo())
+    assert(isWebAssembly() || isJavaScript() || isC())
+    assert(osname() == "TeaVM", osname())
   }
 }
