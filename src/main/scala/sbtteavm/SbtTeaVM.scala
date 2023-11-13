@@ -59,7 +59,7 @@ object SbtTeaVM extends AutoPlugin {
     teavmC -> TeaVMTargetType.C,
   )
 
-  private[this] def excludeLibraries(x: ModuleID): ModuleID = {
+  private[sbtteavm] def excludeLibraries(x: ModuleID): ModuleID = {
     x.excludeAll(
       Seq(
         "commons-io",

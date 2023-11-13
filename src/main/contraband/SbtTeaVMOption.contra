@@ -75,3 +75,25 @@ type SbtTeaVMRunOption {
 
    #xtostring val c = this.getClass; c.getConstructors.head.getParameters.map(p => s"${p.getName} = ${c.getMethod(p.getName).invoke(this)}").mkString("SbtTeaVMRunOption(", ", ", ")")
 }
+
+type SbtTeaVMJUnitOption {
+   target: java.io.File!
+
+   jsRunner: TeaVMBrowser!
+
+   minified: Boolean!
+
+   optimized: Boolean!
+
+   jsDecodeStack: Boolean!
+
+   wasmRunner: TeaVMBrowser!
+
+   wasiRunner: java.io.File
+
+   cCompiler: java.io.File
+
+   sourceDirs: [java.io.File]!
+
+   testTypes: [org.teavm.tooling.TeaVMTargetType]!
+}
