@@ -68,14 +68,45 @@ object SbtTeaVMJUnit extends AutoPlugin {
         val k = s"teavm.junit.${propertyKey}"
         val x1 = (Test / javaOptions).value
         val x2 = x1.filter(_ != s"-D${k}=false")
-        val newOptions = x2 :+ s"-D${k}=true"
-        streams.value.log.info(s"Test / javaOptions = ${newOptions}")
-        val s = state.value.appendWithSession(
-          Seq(
-            Test / javaOptions := newOptions
+        val s1 = state.value
+        val log = streams.value.log
+        IO.withTemporaryDirectory { tmp =>
+          val runWasi = tmp / "run-wasi.sh"
+          val cCompiler = tmp / "compile-c.sh"
+
+          IO.write(
+            runWasi,
+            """mkdir -p target/wasi-testdir
+              |wasmtime run --dir target/wasi-testdir::/ $1 $2
+              |""".stripMargin
           )
-        )
-        Project.extract(s).runTask(Test / test, s)._2
+          runWasi.setExecutable(true)
+          val runWasiPath: String = teavmJUnitOption.value.wasiRunner.getOrElse(runWasi).getAbsolutePath
+
+          IO.write(
+            cCompiler,
+            """export LC_ALL=C
+              |SOURCE_DIR=$(pwd)
+              |gcc -g -O0 -lrt all.c -o run_test -lm
+              |""".stripMargin
+          )
+          cCompiler.setExecutable(true)
+          val cCompilerPath: String = teavmJUnitOption.value.cCompiler.getOrElse(cCompiler).getAbsolutePath
+
+          val newOptions = x2 ++ Seq(
+            s"-D${k}=true",
+            s"-Dteavm.junit.wasi.runner=${runWasiPath}",
+            s"-Dteavm.junit.c.compiler=${cCompilerPath}",
+          )
+
+          log.info(s"Test / javaOptions = ${newOptions}")
+          val s2 = s1.appendWithSession(
+            Seq(
+              Test / javaOptions := newOptions
+            )
+          )
+          Project.extract(s2).runTask(Test / test, s2)._2
+        }
       }
     },
     teavmTest := {
