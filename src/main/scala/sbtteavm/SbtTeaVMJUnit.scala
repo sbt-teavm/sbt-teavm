@@ -16,6 +16,13 @@ object SbtTeaVMJUnit extends AutoPlugin {
 
   import autoImport.*
 
+  private[this] val values: Seq[(TeaVMTargetType, TaskKey[BuildResult], String)] = Seq(
+    (TeaVMTargetType.JAVASCRIPT, SbtTeaVM.autoImport.teavmJS, "js"),
+    (TeaVMTargetType.C, SbtTeaVM.autoImport.teavmC, "c"),
+    (TeaVMTargetType.WEBASSEMBLY, SbtTeaVM.autoImport.teavmWasm, "wasm"),
+    (TeaVMTargetType.WEBASSEMBLY_WASI, SbtTeaVM.autoImport.teavmWasi, "wasi"),
+  )
+
   override val projectSettings: Seq[Setting[?]] = Def.settings(
     Test / fork := true,
     libraryDependencies ++= Seq(
@@ -58,12 +65,7 @@ object SbtTeaVMJUnit extends AutoPlugin {
           )
       }.map { case (k, v) => s"-Dteavm.junit.${k}=${v}" }
     },
-    Seq[(TaskKey[BuildResult], String)](
-      SbtTeaVM.autoImport.teavmJS -> "js",
-      SbtTeaVM.autoImport.teavmC -> "c",
-      SbtTeaVM.autoImport.teavmWasm -> "wasm",
-      SbtTeaVM.autoImport.teavmWasi -> "wasi",
-    ).map { case (taskK, propertyKey) =>
+    values.map { case (_, taskK, propertyKey) =>
       taskK / test := {
         val k = s"teavm.junit.${propertyKey}"
         val x1 = (Test / javaOptions).value
@@ -93,11 +95,13 @@ object SbtTeaVMJUnit extends AutoPlugin {
           cCompiler.setExecutable(true)
           val cCompilerPath: String = teavmJUnitOption.value.cCompiler.getOrElse(cCompiler).getAbsolutePath
 
-          val newOptions = x2 ++ Seq(
+          val newOptions = (x2 ++ Seq(
             s"-D${k}=true",
             s"-Dteavm.junit.wasi.runner=${runWasiPath}",
             s"-Dteavm.junit.c.compiler=${cCompilerPath}",
-          )
+          ) ++ values.map(_._3).filter(_ != propertyKey).map { x =>
+            s"-Dteavm.junit.${x}=false"
+          }).sorted
 
           log.info(s"Test / javaOptions = ${newOptions}")
           val s2 = s1.appendWithSession(
@@ -116,20 +120,14 @@ object SbtTeaVMJUnit extends AutoPlugin {
       val log = streams.value.log
 
       if (types.nonEmpty) {
-        val all = Seq[(TeaVMTargetType, String)](
-          TeaVMTargetType.JAVASCRIPT -> "js",
-          TeaVMTargetType.WEBASSEMBLY -> "wasm",
-          TeaVMTargetType.WEBASSEMBLY_WASI -> "wasi",
-          TeaVMTargetType.C -> "c",
-        )
         val newOptions = Seq(
-          all.map { case (x, y) =>
-            s"-D${y}=${types(x)}"
+          values.map { case (x, _, y) =>
+            s"-Dteavm.junit.${y}=${types(x)}"
           },
           (Test / javaOptions).value.filterNot { x =>
-            all.exists(a => x.startsWith(s"-D${a._2}="))
+            values.map(_._3).exists(a => x.startsWith(s"-Dteavm.junit.${a}="))
           }
-        ).flatten
+        ).flatten.sorted
         log.info(s"Test / javaOptions = ${newOptions}")
         val s2 = s1.appendWithSession(
           Seq(

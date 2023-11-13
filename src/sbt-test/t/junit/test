@@ -1,0 +1,12 @@
+$ absent target/test_log.txt
+> teavmWasi/test
+> check isWebAssembly true
+$ delete target/test_log.txt
+
+$ absent target/test_log.txt
+> teavmWasm/test
+> check isWebAssembly false
+$ delete target/test_log.txt
+
+> teavmTest
+> checkAll
