@@ -89,9 +89,9 @@ type SbtTeaVMJUnitOption {
 
    wasmRunner: TeaVMBrowser!
 
-   wasiRunner: java.io.File
+   wasiRunner: TeaVMRunner!
 
-   cCompiler: java.io.File
+   cCompiler: TeaVMRunner!
 
    sourceDirs: [java.io.File]!
 

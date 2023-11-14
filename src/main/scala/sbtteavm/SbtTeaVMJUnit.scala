@@ -43,27 +43,30 @@ object SbtTeaVMJUnit extends AutoPlugin {
         (Test / sourceDirectories).value
       ).flatten,
       testTypes = Nil,
-      wasiRunner = None, // TODO
-      cCompiler = None, // TODO
+      wasiRunner = TeaVMRunner.Script(
+        """mkdir -p target/wasi-testdir
+          |wasmtime run --dir target/wasi-testdir::/ $1 $2
+          |""".stripMargin
+      ),
+      cCompiler = TeaVMRunner.Script(
+        """export LC_ALL=C
+          |SOURCE_DIR=$(pwd)
+          |gcc -g -O0 -lrt all.c -o run_test -lm
+          |""".stripMargin
+      ),
     ),
     Test / javaOptions := {
       val x = teavmJUnitOption.value
 
-      {
-        Seq(
-          x.wasiRunner.map(f => "wasi.runner" -> f.getAbsolutePath),
-          x.cCompiler.map(f => "c.compiler" -> f.getAbsolutePath)
-        ).flatten ++
-          Seq[(String, String)](
-            "target" -> x.target.getAbsolutePath,
-            "js.runner" -> x.jsRunner.value,
-            "minified" -> java.lang.Boolean.toString(x.minified),
-            "optimized" -> java.lang.Boolean.toString(x.optimized),
-            "js.decodeStack" -> java.lang.Boolean.toString(x.jsDecodeStack),
-            "wasm.runner" -> x.wasmRunner.value,
-            "sourceDirs" -> x.sourceDirs.map(_.getAbsolutePath).mkString(java.io.File.pathSeparator)
-          )
-      }.map { case (k, v) => s"-Dteavm.junit.${k}=${v}" }
+      Seq[(String, String)](
+        "target" -> x.target.getAbsolutePath,
+        "js.runner" -> x.jsRunner.value,
+        "minified" -> java.lang.Boolean.toString(x.minified),
+        "optimized" -> java.lang.Boolean.toString(x.optimized),
+        "js.decodeStack" -> java.lang.Boolean.toString(x.jsDecodeStack),
+        "wasm.runner" -> x.wasmRunner.value,
+        "sourceDirs" -> x.sourceDirs.map(_.getAbsolutePath).mkString(java.io.File.pathSeparator)
+      ).map { case (k, v) => s"-Dteavm.junit.${k}=${v}" }
     },
     values.map { case (_, taskK, propertyKey) =>
       taskK / test := {
@@ -72,44 +75,24 @@ object SbtTeaVMJUnit extends AutoPlugin {
         val x2 = x1.filter(_ != s"-D${k}=false")
         val s1 = state.value
         val log = streams.value.log
-        IO.withTemporaryDirectory { tmp =>
-          val runWasi = tmp / "run-wasi.sh"
-          val cCompiler = tmp / "compile-c.sh"
+        teavmJUnitOption.value.wasiRunner.withPath { runWasiPath =>
+          teavmJUnitOption.value.cCompiler.withPath { cCompilerPath =>
+            val newOptions = (x2 ++ Seq(
+              s"-D${k}=true",
+              s"-Dteavm.junit.wasi.runner=${runWasiPath}",
+              s"-Dteavm.junit.c.compiler=${cCompilerPath}",
+            ) ++ values.map(_._3).filter(_ != propertyKey).map { x =>
+              s"-Dteavm.junit.${x}=false"
+            }).sorted
 
-          IO.write(
-            runWasi,
-            """mkdir -p target/wasi-testdir
-              |wasmtime run --dir target/wasi-testdir::/ $1 $2
-              |""".stripMargin
-          )
-          runWasi.setExecutable(true)
-          val runWasiPath: String = teavmJUnitOption.value.wasiRunner.getOrElse(runWasi).getAbsolutePath
-
-          IO.write(
-            cCompiler,
-            """export LC_ALL=C
-              |SOURCE_DIR=$(pwd)
-              |gcc -g -O0 -lrt all.c -o run_test -lm
-              |""".stripMargin
-          )
-          cCompiler.setExecutable(true)
-          val cCompilerPath: String = teavmJUnitOption.value.cCompiler.getOrElse(cCompiler).getAbsolutePath
-
-          val newOptions = (x2 ++ Seq(
-            s"-D${k}=true",
-            s"-Dteavm.junit.wasi.runner=${runWasiPath}",
-            s"-Dteavm.junit.c.compiler=${cCompilerPath}",
-          ) ++ values.map(_._3).filter(_ != propertyKey).map { x =>
-            s"-Dteavm.junit.${x}=false"
-          }).sorted
-
-          log.info(s"Test / javaOptions = ${newOptions}")
-          val s2 = s1.appendWithSession(
-            Seq(
-              Test / javaOptions := newOptions
+            log.info(s"Test / javaOptions = ${newOptions}")
+            val s2 = s1.appendWithSession(
+              Seq(
+                Test / javaOptions := newOptions
+              )
             )
-          )
-          Project.extract(s2).runTask(Test / test, s2)._2
+            Project.extract(s2).runTask(Test / test, s2)._2
+          }
         }
       }
     },
@@ -120,21 +103,30 @@ object SbtTeaVMJUnit extends AutoPlugin {
       val log = streams.value.log
 
       if (types.nonEmpty) {
-        val newOptions = Seq(
-          values.map { case (x, _, y) =>
-            s"-Dteavm.junit.${y}=${types(x)}"
-          },
-          (Test / javaOptions).value.filterNot { x =>
-            values.map(_._3).exists(a => x.startsWith(s"-Dteavm.junit.${a}="))
+
+        teavmJUnitOption.value.wasiRunner.withPath { runWasiPath =>
+          teavmJUnitOption.value.cCompiler.withPath { cCompilerPath =>
+            val newOptions = Seq(
+              Seq(
+                s"-Dteavm.junit.wasi.runner=${runWasiPath}",
+                s"-Dteavm.junit.c.compiler=${cCompilerPath}",
+              ),
+              values.map { case (x, _, y) =>
+                s"-Dteavm.junit.${y}=${types(x)}"
+              },
+              (Test / javaOptions).value.filterNot { x =>
+                values.map(_._3).exists(a => x.startsWith(s"-Dteavm.junit.${a}="))
+              }
+            ).flatten.sorted
+            log.info(s"Test / javaOptions = ${newOptions}")
+            val s2 = s1.appendWithSession(
+              Seq(
+                Test / javaOptions := newOptions,
+              )
+            )
+            Project.extract(s2).runTask(Test / test, s2)._2
           }
-        ).flatten.sorted
-        log.info(s"Test / javaOptions = ${newOptions}")
-        val s2 = s1.appendWithSession(
-          Seq(
-            Test / javaOptions := newOptions,
-          )
-        )
-        Project.extract(s2).runTask(Test / test, s2)._2
+        }
       } else {
         log.info("testTypes is empty")
       }

@@ -10,6 +10,7 @@ sealed abstract class TeaVMRunner extends Product with Serializable {
         IO.withTemporaryDirectory { tmp =>
           val x = tmp / "run.sh"
           IO.write(x, value)
+          x.setExecutable(true)
           f(x.getAbsolutePath)
         }
       case TeaVMRunner.FilePath(value) =>

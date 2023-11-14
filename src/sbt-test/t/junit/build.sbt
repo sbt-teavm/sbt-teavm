@@ -37,8 +37,12 @@ InputKey[Unit]("check") := {
 }
 
 TaskKey[Unit]("checkAll") := {
-  val actual = IO.readLines(testLogFile.value).filterNot(_ contains "chrome")
-  val expect = List.fill(2)("isWebAssembly")
+  val actual: Map[String, Int] =
+    IO.readLines(testLogFile.value).filterNot(_ contains "chrome").groupBy(identity).mapValues(_.size)
+  val expect: Map[String, Int] = Map(
+    "isWebAssembly" -> 4,
+    "SUCCESS" -> 2,
+  )
   assert(actual == expect, s" '${actual}' != '${expect}' ")
 }
 
