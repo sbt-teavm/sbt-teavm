@@ -10,17 +10,25 @@ object SbtTeaVMJUnit extends AutoPlugin {
   object autoImport {
     val teavmJUnitOption = settingKey[SbtTeaVMJUnitOption]("")
     val teavmTest = taskKey[Unit]("")
+
+    private[SbtTeaVMJUnit] val teavmJUnitOpt = settingKey[Seq[TeaVMJUnitOpt]]("")
   }
 
   override def requires: Plugins = SbtTeaVM
 
   import autoImport.*
 
-  private[this] val values: Seq[(TeaVMTargetType, TaskKey[BuildResult], String)] = Seq(
-    (TeaVMTargetType.JAVASCRIPT, SbtTeaVM.autoImport.teavmJS, "js"),
-    (TeaVMTargetType.C, SbtTeaVM.autoImport.teavmC, "c"),
-    (TeaVMTargetType.WEBASSEMBLY, SbtTeaVM.autoImport.teavmWasm, "wasm"),
-    (TeaVMTargetType.WEBASSEMBLY_WASI, SbtTeaVM.autoImport.teavmWasi, "wasi"),
+  private case class TeaVMPlatform(
+    targetType: TeaVMTargetType,
+    task: TaskKey[BuildResult],
+    createOption: Boolean => TeaVMJUnitOpt
+  )
+
+  private[this] val values: Seq[TeaVMPlatform] = Seq(
+    TeaVMPlatform(TeaVMTargetType.JAVASCRIPT, SbtTeaVM.autoImport.teavmJS, TeaVMJUnitOpt.Js),
+    TeaVMPlatform(TeaVMTargetType.C, SbtTeaVM.autoImport.teavmC, TeaVMJUnitOpt.C),
+    TeaVMPlatform(TeaVMTargetType.WEBASSEMBLY, SbtTeaVM.autoImport.teavmWasm, TeaVMJUnitOpt.Wasm),
+    TeaVMPlatform(TeaVMTargetType.WEBASSEMBLY_WASI, SbtTeaVM.autoImport.teavmWasi, TeaVMJUnitOpt.Wasi),
   )
 
   override val projectSettings: Seq[Setting[?]] = Def.settings(
@@ -65,39 +73,46 @@ object SbtTeaVMJUnit extends AutoPlugin {
       testServerLog = TestServerLog.Stdout,
     ),
     Test / javaOptions := {
+      val log = streams.value.log
+      teavmJUnitOpt.value.zipWithIndex.groupBy(_._1.fullKey).toList.sortBy(_._1).map(_._2).map { x =>
+        val res = x.maxBy(_._2)._1.asString
+        if (x.size > 1) {
+          log.info(s"found multiple value. overwrite ${res}")
+        }
+        res
+      }
+    },
+    teavmJUnitOpt := {
       val x = teavmJUnitOption.value
 
-      Seq[(String, String)](
-        "target" -> x.target.getAbsolutePath,
-        "js.runner" -> x.jsRunner.value,
-        "minified" -> java.lang.Boolean.toString(x.minified),
-        "optimized" -> java.lang.Boolean.toString(x.optimized),
-        "js.decodeStack" -> java.lang.Boolean.toString(x.jsDecodeStack),
-        "wasm.runner" -> x.wasmRunner.value,
-        "sourceDirs" -> x.sourceDirs.map(_.getAbsolutePath).mkString(java.io.File.pathSeparator)
-      ).map { case (k, v) => s"-Dteavm.junit.${k}=${v}" }
+      Seq(
+        TeaVMJUnitOpt.Target(x.target),
+        TeaVMJUnitOpt.JsRunner(x.jsRunner.value),
+        TeaVMJUnitOpt.Minified(x.minified),
+        TeaVMJUnitOpt.Optimized(x.optimized),
+        TeaVMJUnitOpt.JsDecodeStack(x.jsDecodeStack),
+        TeaVMJUnitOpt.WasmRunner(x.wasmRunner.value),
+        TeaVMJUnitOpt.SourceDirs(x.sourceDirs)
+      )
     },
-    values.map { case (_, taskK, propertyKey) =>
-      taskK / test := {
-        val k = s"teavm.junit.${propertyKey}"
-        val x1 = (Test / javaOptions).value
-        val x2 = x1.filter(_ != s"-D${k}=false")
+    values.map { platform =>
+      platform.task / test := {
         val s1 = state.value
-        val log = streams.value.log
         teavmJUnitOption.value.wasiRunner.withPath { runWasiPath =>
           teavmJUnitOption.value.cCompiler.withPath { cCompilerPath =>
-            val newOptions = (x2 ++ Seq(
-              s"-D${k}=true",
-              s"-Dteavm.junit.wasi.runner=${runWasiPath}",
-              s"-Dteavm.junit.c.compiler=${cCompilerPath}",
-            ) ++ values.map(_._3).filter(_ != propertyKey).map { x =>
-              s"-Dteavm.junit.${x}=false"
-            }).sorted
+            val newOptions = Seq[TeaVMJUnitOpt](
+              platform.createOption(true),
+              TeaVMJUnitOpt.WasiRunner(runWasiPath),
+              TeaVMJUnitOpt.CCompiler(cCompilerPath),
+            ) ++ values
+              .filter(_.targetType != platform.targetType)
+              .map(
+                _.createOption(false)
+              )
 
-            log.info(s"Test / javaOptions = ${newOptions}")
             val s2 = s1.appendWithSession(
               Seq(
-                Test / javaOptions := newOptions
+                teavmJUnitOpt ++= newOptions
               )
             )
             Project.extract(s2).runTask(Test / test, s2)._2
@@ -112,25 +127,18 @@ object SbtTeaVMJUnit extends AutoPlugin {
       val log = streams.value.log
 
       if (types.nonEmpty) {
-
         teavmJUnitOption.value.wasiRunner.withPath { runWasiPath =>
           teavmJUnitOption.value.cCompiler.withPath { cCompilerPath =>
             val newOptions = Seq(
               Seq(
-                s"-Dteavm.junit.wasi.runner=${runWasiPath}",
-                s"-Dteavm.junit.c.compiler=${cCompilerPath}",
+                TeaVMJUnitOpt.WasiRunner(runWasiPath),
+                TeaVMJUnitOpt.CCompiler(cCompilerPath),
               ),
-              values.map { case (x, _, y) =>
-                s"-Dteavm.junit.${y}=${types(x)}"
-              },
-              (Test / javaOptions).value.filterNot { x =>
-                values.map(_._3).exists(a => x.startsWith(s"-Dteavm.junit.${a}="))
-              }
-            ).flatten.sorted
-            log.info(s"Test / javaOptions = ${newOptions}")
+              values.map(x => x.createOption(types(x.targetType))),
+            ).flatten
             val s2 = s1.appendWithSession(
               Seq(
-                Test / javaOptions := newOptions,
+                teavmJUnitOpt ++= newOptions,
               )
             )
             Project.extract(s2).runTask(Test / test, s2)._2

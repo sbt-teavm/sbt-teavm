@@ -4,17 +4,17 @@ import java.io.File
 import sbt.*
 
 sealed abstract class TeaVMRunner extends Product with Serializable {
-  private[sbtteavm] def withPath[A](f: String => A): A = {
+  private[sbtteavm] def withPath[A](f: File => A): A = {
     this match {
       case TeaVMRunner.Script(value) =>
         IO.withTemporaryDirectory { tmp =>
           val x = tmp / "run.sh"
           IO.write(x, value)
           x.setExecutable(true)
-          f(x.getAbsolutePath)
+          f(x)
         }
       case TeaVMRunner.FilePath(value) =>
-        f(value.getAbsolutePath)
+        f(value)
     }
   }
 }
