@@ -12,11 +12,11 @@ object TeaVMJUnitOpt {
   final case class Target(value: File) extends TeaVMJUnitOpt("target") {
     override def asValue: String = value.getAbsolutePath
   }
-  final case class JsRunner(value: String) extends TeaVMJUnitOpt("js.runner") {
-    override def asValue: String = value
+  final case class JsRunner(value: TeaVMBrowser) extends TeaVMJUnitOpt("js.runner") {
+    override def asValue: String = value.value
   }
-  final case class WasmRunner(value: String) extends TeaVMJUnitOpt("wasm.runner") {
-    override def asValue: String = value
+  final case class WasmRunner(value: TeaVMBrowser) extends TeaVMJUnitOpt("wasm.runner") {
+    override def asValue: String = value.value
   }
   final case class Js(value: Boolean) extends TeaVMJUnitOpt("js") {
     override def asValue: String = java.lang.Boolean.toString(value)

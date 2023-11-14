@@ -87,11 +87,11 @@ object SbtTeaVMJUnit extends AutoPlugin {
 
       Seq(
         TeaVMJUnitOpt.Target(x.target),
-        TeaVMJUnitOpt.JsRunner(x.jsRunner.value),
+        TeaVMJUnitOpt.JsRunner(x.jsRunner),
         TeaVMJUnitOpt.Minified(x.minified),
         TeaVMJUnitOpt.Optimized(x.optimized),
         TeaVMJUnitOpt.JsDecodeStack(x.jsDecodeStack),
-        TeaVMJUnitOpt.WasmRunner(x.wasmRunner.value),
+        TeaVMJUnitOpt.WasmRunner(x.wasmRunner),
         TeaVMJUnitOpt.SourceDirs(x.sourceDirs)
       )
     },
