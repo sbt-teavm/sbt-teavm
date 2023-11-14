@@ -55,3 +55,5 @@ teavmJUnitOption ~= (
     )
   )
 )
+
+teavmJUnitOption ~= (_.withTestServerLog(sbtteavm.TestServerLog.Disable))

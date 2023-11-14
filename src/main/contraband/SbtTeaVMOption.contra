@@ -96,4 +96,6 @@ type SbtTeaVMJUnitOption {
    sourceDirs: [java.io.File]!
 
    testTypes: [org.teavm.tooling.TeaVMTargetType]!
+
+   testServerLog: TestServerLog!
 }

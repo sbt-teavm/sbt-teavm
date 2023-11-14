@@ -31,6 +31,14 @@ object SbtTeaVMJUnit extends AutoPlugin {
       ),
       "com.github.sbt" % "junit-interface" % "0.13.3" % Test,
     ),
+    libraryDependencies ++= {
+      teavmJUnitOption.value.testServerLog match {
+        case TestServerLog.Stdout =>
+          Nil
+        case TestServerLog.Disable =>
+          Seq("org.slf4j" % "slf4j-nop" % "1.7.36" % Test)
+      }
+    },
     teavmJUnitOption := SbtTeaVMJUnitOption(
       target = crossTarget.value / "teavm-test",
       jsRunner = TeaVMBrowser.Chrome,
@@ -54,6 +62,7 @@ object SbtTeaVMJUnit extends AutoPlugin {
           |gcc -g -O0 -lrt all.c -o run_test -lm
           |""".stripMargin
       ),
+      testServerLog = TestServerLog.Stdout,
     ),
     Test / javaOptions := {
       val x = teavmJUnitOption.value
