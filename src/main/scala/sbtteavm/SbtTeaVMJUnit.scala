@@ -10,13 +10,13 @@ object SbtTeaVMJUnit extends AutoPlugin {
   object autoImport {
     val teavmJUnitOption = settingKey[SbtTeaVMJUnitOption]("")
     val teavmTest = taskKey[Unit]("")
-
-    private[SbtTeaVMJUnit] val teavmJUnitOpt = settingKey[Seq[TeaVMJUnitOpt]]("")
   }
 
   override def requires: Plugins = SbtTeaVM
 
   import autoImport.*
+
+  private[this] val teavmJUnitOpt = settingKey[Seq[TeaVMJUnitOpt]]("")
 
   private case class TeaVMPlatform(
     targetType: TeaVMTargetType,
@@ -25,10 +25,26 @@ object SbtTeaVMJUnit extends AutoPlugin {
   )
 
   private[this] val values: Seq[TeaVMPlatform] = Seq(
-    TeaVMPlatform(TeaVMTargetType.JAVASCRIPT, SbtTeaVM.autoImport.teavmJS, TeaVMJUnitOpt.Js),
-    TeaVMPlatform(TeaVMTargetType.C, SbtTeaVM.autoImport.teavmC, TeaVMJUnitOpt.C),
-    TeaVMPlatform(TeaVMTargetType.WEBASSEMBLY, SbtTeaVM.autoImport.teavmWasm, TeaVMJUnitOpt.Wasm),
-    TeaVMPlatform(TeaVMTargetType.WEBASSEMBLY_WASI, SbtTeaVM.autoImport.teavmWasi, TeaVMJUnitOpt.Wasi),
+    TeaVMPlatform(
+      TeaVMTargetType.JAVASCRIPT,
+      SbtTeaVM.autoImport.teavmJS,
+      TeaVMJUnitOpt.Js
+    ),
+    TeaVMPlatform(
+      TeaVMTargetType.C,
+      SbtTeaVM.autoImport.teavmC,
+      TeaVMJUnitOpt.C
+    ),
+    TeaVMPlatform(
+      TeaVMTargetType.WEBASSEMBLY,
+      SbtTeaVM.autoImport.teavmWasm,
+      TeaVMJUnitOpt.Wasm
+    ),
+    TeaVMPlatform(
+      TeaVMTargetType.WEBASSEMBLY_WASI,
+      SbtTeaVM.autoImport.teavmWasi,
+      TeaVMJUnitOpt.Wasi
+    ),
   )
 
   override val projectSettings: Seq[Setting[?]] = Def.settings(
@@ -37,14 +53,14 @@ object SbtTeaVMJUnit extends AutoPlugin {
       SbtTeaVM.excludeLibraries(
         "org.teavm" % "teavm-junit" % SbtTeaVM.autoImport.teavmBuildOption.value.version % Test,
       ),
-      "com.github.sbt" % "junit-interface" % "0.13.3" % Test,
+      "com.github.sbt" % "junit-interface" % SbtTeaVMBuildInfo.junitInterfaceVersion % Test,
     ),
     libraryDependencies ++= {
       teavmJUnitOption.value.testServerLog match {
         case TestServerLog.Stdout =>
           Nil
         case TestServerLog.Disable =>
-          Seq("org.slf4j" % "slf4j-nop" % "1.7.36" % Test)
+          Seq("org.slf4j" % "slf4j-nop" % SbtTeaVMBuildInfo.slf4jVersion % Test)
       }
     },
     teavmJUnitOption := SbtTeaVMJUnitOption(

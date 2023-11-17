@@ -43,6 +43,32 @@ scalacOptions ++= Seq(
 scalafixOnCompile := true
 semanticdbEnabled := true
 
+val slf4j = "org.slf4j" % "slf4j-nop" % "1.7.36" % Test
+val junitInterface = "com.github.sbt" % "junit-interface" % "0.13.3" % Test
+libraryDependencies ++= Seq(slf4j, junitInterface)
+
+pomPostProcess := { node =>
+  import scala.xml.{NodeSeq, Node}
+  val rule = new scala.xml.transform.RewriteRule {
+    override def transform(n: Node) = {
+      if (
+        Seq(slf4j, junitInterface).exists { x =>
+          List(
+            n.label == "dependency",
+            (n \ "groupId").text == x.organization,
+            (n \ "artifactId").text == x.name,
+          ).forall(identity)
+        }
+      ) {
+        NodeSeq.Empty
+      } else {
+        n
+      }
+    }
+  }
+  new scala.xml.transform.RuleTransformer(rule).transform(node)(0)
+}
+
 Compile / sourceGenerators += Def.task {
   val objName = "SbtTeaVMBuildInfo"
   val f = (Compile / sourceManaged).value / "sbtteavm" / s"${objName}.scala"
@@ -51,6 +77,8 @@ Compile / sourceGenerators += Def.task {
        |
        |private[sbtteavm] object ${objName} {
        |  def teavmVersion: String = "${teavmTooling.revision}"
+       |  def slf4jVersion: String = "${slf4j.revision}"
+       |  def junitInterfaceVersion: String = "${junitInterface.revision}"
        |}
        |""".stripMargin
   IO.write(f, src)
