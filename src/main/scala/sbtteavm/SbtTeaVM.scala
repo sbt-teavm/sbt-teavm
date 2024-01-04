@@ -164,7 +164,6 @@ object SbtTeaVM extends AutoPlugin {
             (x / teavmLog).?.value.foreach(builder.setLog)
             builder.setObfuscated(options.obfuscated)
             builder.setStrict(options.strict)
-            builder.setMaxTopLevelNames(options.maxTopLevelNames)
             builder.setTransformers(options.transformers.toArray)
             builder.setOptimizationLevel(options.optimizationLevel)
             builder.setFastDependencyAnalysis(options.fastDependencyAnalysis)
