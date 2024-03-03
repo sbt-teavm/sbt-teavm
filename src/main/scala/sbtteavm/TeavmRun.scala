@@ -1,8 +1,8 @@
 package sbtteavm
 
 import org.teavm.tooling.builder.BuildResult
-import sbt.Keys.*
 import sbt.*
+import sbt.Keys.*
 import sbtteavm.SbtTeaVM.autoImport.*
 import scala.sys.process.ProcessLogger
 

@@ -17,8 +17,8 @@ import org.teavm.vm.TeaVMOptimizationLevel
 import org.teavm.vm.TeaVMPhase
 import org.teavm.vm.TeaVMProgressFeedback
 import org.teavm.vm.TeaVMProgressListener
-import sbt.Keys.*
 import sbt.*
+import sbt.Keys.*
 import scala.jdk.CollectionConverters.*
 import scala.sys.process.ProcessLogger
 
