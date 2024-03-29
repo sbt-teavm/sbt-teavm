@@ -26,7 +26,7 @@ val teavmTooling = "org.teavm" % "teavm-tooling" % "0.9.2" excludeAll (
     "com.carrotsearch",
     "org.mozilla",
     "org.ow2.asm",
-  ).map(x => ExclusionRule(organization = x))*
+  ).map(x => ExclusionRule(organization = x)) *
 )
 
 libraryDependencies ++= Seq(
