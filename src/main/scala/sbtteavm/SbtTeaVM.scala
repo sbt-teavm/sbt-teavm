@@ -2,6 +2,7 @@ package sbtteavm
 
 import java.rmi.registry.LocateRegistry
 import java.util.Properties
+import org.teavm.backend.javascript.JSModuleType
 import org.teavm.backend.wasm.render.WasmBinaryVersion
 import org.teavm.diagnostics.DefaultProblemTextConsumer
 import org.teavm.tooling.TeaVMTargetType
@@ -137,6 +138,7 @@ object SbtTeaVM extends AutoPlugin {
           val options = (x / teavmBuildOption).value
 
           builder => {
+            builder.setJsModuleType(options.jsModuleType.getOrElse(JSModuleType.NONE))
             builder.setTargetType(targetType)
             (x / sourceDirectories).?.value.getOrElse(Nil).map(_.getAbsolutePath).foreach(builder.addSourcesDirectory)
             options.sourcesJar.map(_.getAbsolutePath).foreach(builder.addSourcesJar)
@@ -153,7 +155,6 @@ object SbtTeaVM extends AutoPlugin {
             builder.setTargetDirectory(options.targetDirectory.getAbsolutePath)
             builder.setSourceMapsFileGenerated(options.sourceMapsFileGenerated)
             builder.setDebugInformationGenerated(options.debugInformationGenerated)
-            builder.setSourceFilesCopied(options.sourceFilesCopied)
             (x / teavmProgressListener).?.value.foreach(builder.setProgressListener)
             builder.setIncremental(options.incremental)
             val p = new Properties()
@@ -188,7 +189,6 @@ object SbtTeaVM extends AutoPlugin {
     teavmAfterBuild := {
       val log = streams.value.log
       (result: BuildResult) => {
-        log.info(result.getGeneratedFiles.asScala.map("  " + _).mkString("generated teavm files:\n", "\n", ""))
         val problems = result.getProblems.getProblems.asScala.toList
         if (problems.nonEmpty) {
           log.warn(s"found ${problems.size} problems")

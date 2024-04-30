@@ -1,7 +1,7 @@
-> teavmC
-> teavmJS
-> teavmWasm
-> teavmWasi
+-> teavmC
+-> teavmJS
+-> teavmWasm
+-> teavmWasi
 
 -> teavmJS/run js
 -> teavmWasi/run wasi

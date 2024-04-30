@@ -57,6 +57,8 @@ type SbtTeaVMBuildOption {
 
    cleanTargetDirectory: Boolean!
 
+   jsModuleType: org.teavm.backend.javascript.JSModuleType @since("0.2.0")
+
    #xtostring val c = this.getClass; c.getConstructors.head.getParameters.map(p => s"${p.getName} = ${c.getMethod(p.getName).invoke(this)}").mkString("SbtTeaVMBuildOption(", ", ", ")")
 
    #xcompanion private type MapStringString = Map[String, String]
