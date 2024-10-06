@@ -37,8 +37,20 @@ libraryDependencies ++= Seq(
 
 scalacOptions ++= Seq(
   "-deprecation",
-  "-Ywarn-unused:imports",
 )
+
+val unusedWarnings = Def.setting(
+  scalaBinaryVersion.value match {
+    case "2.12" =>
+      Seq("-Ywarn-unused:imports")
+    case _ =>
+      Seq("-Wunused:imports")
+  }
+)
+
+scalacOptions ++= unusedWarnings.value
+
+Seq(Compile, Test).flatMap(c => c / console / scalacOptions --= unusedWarnings.value)
 
 scalafixOnCompile := true
 semanticdbEnabled := true
