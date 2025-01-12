@@ -31,8 +31,8 @@ val teavmTooling = "org.teavm" % "teavm-tooling" % "0.10.2" excludeAll (
 
 libraryDependencies ++= Seq(
   teavmTooling,
-  "ws.unfiltered" %% "unfiltered-filter" % "0.12.0",
-  "ws.unfiltered" %% "unfiltered-jetty" % "0.12.0",
+  "ws.unfiltered" %% "unfiltered-filter" % "0.12.1",
+  "ws.unfiltered" %% "unfiltered-jetty" % "0.12.1",
 )
 
 scalacOptions ++= Seq(
