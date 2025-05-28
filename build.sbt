@@ -99,7 +99,7 @@ licenses := Seq("MIT License" -> url("https://opensource.org/license/mit/"))
 
 releaseTagName := tagName.value
 
-publishTo := sonatypePublishToBundle.value
+publishTo := (if (isSnapshot.value) None else localStaging.value)
 
 Compile / doc / scalacOptions ++= {
   val tag = tagOrHash.value
@@ -128,7 +128,7 @@ releaseProcess := Seq[ReleaseStep](
     },
     enableCrossBuild = false
   ),
-  releaseStepCommand("sonatypeBundleRelease"),
+  releaseStepCommand("sonaRelease"),
   setNextVersion,
   commitNextVersion,
   pushChanges,
@@ -144,5 +144,3 @@ Compile / packageSrc / mappings ++= (Compile / managedSources).value.map { f =>
   // to merge generated sources into sources.jar as well
   (f, f.relativeTo((Compile / sourceManaged).value).get.getPath)
 }
-
-ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
