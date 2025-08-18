@@ -19,7 +19,7 @@ jobs:
         java-version: "${{matrix.java}}"
         distribution: adopt
         cache: sbt
-    - run: sbt scalafmtSbt scalafixAll scalafmtAll
+    - run: sbt scalafmtSbt "+ scalafixAll" "+ scalafmtAll"
     - run: git diff --exit-code
     - uses: reviewdog/action-suggester@4747dbc9f9e37adba0943e681cc20db466642158 # v1.19.0
       if: failure()
@@ -30,4 +30,4 @@ jobs:
     - run: wasmtime --version
     - run: node --version
     - run: npm --version
-    - run: sbt test scripted
+    - run: sbt "+ test" scripted

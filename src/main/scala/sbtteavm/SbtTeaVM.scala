@@ -20,6 +20,7 @@ import org.teavm.vm.TeaVMProgressFeedback
 import org.teavm.vm.TeaVMProgressListener
 import sbt.*
 import sbt.Keys.*
+import sbtteavm.SbtTeaVMCompat.*
 import scala.jdk.CollectionConverters.*
 import scala.sys.process.ProcessLogger
 
@@ -73,7 +74,7 @@ object SbtTeaVM extends AutoPlugin {
 
   private[this] val teavmBuild: Def.SettingsDefinition = Def.settings {
     buildValues.map { case (x, targetType) =>
-      x := {
+      x := Def.uncached {
         val buildOption = (x / teavmBuildOption).value
         val s = (x / teavmApplySetting).value
         val jarFiles = Def.taskDyn {
@@ -132,7 +133,7 @@ object SbtTeaVM extends AutoPlugin {
           (Compile / mainClass).value.orElse(Defaults.askForMainClass((Compile / discoveredMainClasses).value))
         },
         x / sourceDirectories := (Compile / sourceDirectories).value,
-        x / teavmApplySetting := {
+        x / teavmApplySetting := Def.uncached {
           val mainClassOpt = (x / mainClass).value.filter(_.nonEmpty)
           val log = streams.value.log
           val options = (x / teavmBuildOption).value
@@ -185,8 +186,8 @@ object SbtTeaVM extends AutoPlugin {
       )
     },
     teavmBuild,
-    teavmDaemonLog := new DaemonLogImpl(streams.value.log),
-    teavmAfterBuild := {
+    teavmDaemonLog := Def.uncached(new DaemonLogImpl(streams.value.log)),
+    teavmAfterBuild := Def.uncached {
       val log = streams.value.log
       (result: BuildResult) => {
         val problems = result.getProblems.getProblems.asScala.toList
@@ -332,8 +333,10 @@ object SbtTeaVM extends AutoPlugin {
         )
       )
     },
-    teavmLog := new TeaVMLog(streams.value.log),
-    teavmClassPathEntries := (Compile / fullClasspath).value.map(_.data),
+    teavmLog := Def.uncached(new TeaVMLog(streams.value.log)),
+    teavmClassPathEntries := Def.uncached(
+      (Compile / fullClasspath).value.map(x => SbtTeaVMCompat.toFile(x.data, fileConverter.value))
+    ),
     teavmTargetFileNameBase := "main",
     teavmBuildOption := SbtTeaVMBuildOption(
       sourcesJar = Vector.empty,
@@ -387,7 +390,7 @@ object SbtTeaVM extends AutoPlugin {
           )
       }
     },
-    teavmProgressListener := new TeaVMProgressListener {
+    teavmProgressListener := Def.uncached(new TeaVMProgressListener {
       override def phaseStarted(phase: TeaVMPhase, count: Int): TeaVMProgressFeedback = {
         streams.value.log.debug(s"teavm phase start ${phase} ${count}")
         TeaVMProgressFeedback.CONTINUE
@@ -397,7 +400,7 @@ object SbtTeaVM extends AutoPlugin {
         streams.value.log.debug(s"teavm progress reached ${progress}")
         TeaVMProgressFeedback.CONTINUE
       }
-    }
+    })
   )
 
   private[this] def getJarFiles(module: ModuleID): Def.Initialize[Task[Seq[File]]] = Def.task {

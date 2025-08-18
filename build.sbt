@@ -37,6 +37,7 @@ libraryDependencies ++= Seq(
 
 scalacOptions ++= Seq(
   "-deprecation",
+  "-Wconf:origin=sbtteavm.SbtTeaVMCompat:silent",
 )
 
 val unusedWarnings = Def.setting(
@@ -126,7 +127,7 @@ releaseProcess := Seq[ReleaseStep](
       val extracted = Project extract state
       extracted.runAggregated(extracted.get(thisProjectRef) / (Global / PgpKeys.publishSigned), state)
     },
-    enableCrossBuild = false
+    enableCrossBuild = true
   ),
   releaseStepCommand("sonaRelease"),
   setNextVersion,
@@ -144,3 +145,14 @@ Compile / packageSrc / mappings ++= (Compile / managedSources).value.map { f =>
   // to merge generated sources into sources.jar as well
   (f, f.relativeTo((Compile / sourceManaged).value).get.getPath)
 }
+
+pluginCrossBuild / sbtVersion := {
+  scalaBinaryVersion.value match {
+    case "2.12" =>
+      (pluginCrossBuild / sbtVersion).value
+    case _ =>
+      "2.0.0-RC3"
+  }
+}
+
+crossScalaVersions += "3.7.2"
