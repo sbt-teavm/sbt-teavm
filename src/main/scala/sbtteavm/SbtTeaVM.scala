@@ -202,7 +202,7 @@ object SbtTeaVM extends AutoPlugin {
         }
       }
     },
-    inTask(teavmJS)(
+    Project.inTask(teavmJS)(
       teavmPuppeteerFile := { (url, args) =>
         s"""|const puppeteer = require('puppeteer');
             |
@@ -229,7 +229,7 @@ object SbtTeaVM extends AutoPlugin {
             |""".stripMargin
       }
     ),
-    inTask(teavmWasm)(
+    Project.inTask(teavmWasm)(
       teavmPuppeteerFile := { (url, args) =>
         s"""|const puppeteer = require('puppeteer');
             |
@@ -295,7 +295,7 @@ object SbtTeaVM extends AutoPlugin {
       teavmWasi -> TeavmRun.wasi,
       teavmWasm -> TeavmRun.wasm,
     ).flatMap { case (key, runImpl) =>
-      inTask(key)(
+      Project.inTask(key)(
         Def.settings(
           run := Def.inputTaskDyn {
             import sbt.complete.DefaultParsers.*
