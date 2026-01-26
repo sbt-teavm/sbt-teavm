@@ -29,7 +29,9 @@ addSbtPlugin("io.github.sbt-teavm" % "sbt-teavm" % version)
 
 #### `build.sbt`
 
-note: Maybe Scala 3 does not work due to default `lazy val` implementation use [`sun.misc.Unsafe`](https://github.com/lampepfl/dotty/blob/3.3.1/library/src/scala/runtime/LazyVals.scala)
+note: Maybe Scala 3 does not work due to default `lazy val` implementation use [`sun.misc.Unsafe`](https://github.com/scala/scala3/blob/3.8.1/library/src/scala/runtime/LazyVals.scala)
+
+https://github.com/konsoletyper/teavm/issues/1117
 
 ```scala
 scalaVersion := // recommend 2.13.x
