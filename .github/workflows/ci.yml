@@ -21,7 +21,12 @@ jobs:
         java-version: "${{matrix.java}}"
         distribution: zulu
         cache: sbt
-    - run: sbt scalafmtSbt "+ scalafixAll" "+ scalafmtAll"
+    - run: sbt
+           -v
+           --server
+           scalafmtSbt
+           "+ scalafixAll"
+           "+ scalafmtAll"
     - run: git diff --exit-code
     - uses: reviewdog/action-suggester@2558ba17e65a9039e73764a73009fc05fef28a46 # v1.19.0
       if: failure()
@@ -34,4 +39,5 @@ jobs:
            -v
            --server
            "+ test"
+           "++ 2.x"
            scripted
