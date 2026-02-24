@@ -20,7 +20,7 @@ scriptedLaunchOpts ++= Seq[(String, String)](
 
 enablePlugins(SbtPlugin)
 
-val teavmTooling = "org.teavm" % "teavm-tooling" % "0.13.1" excludeAll (
+val teavmTooling = ("org.teavm" % "teavm-tooling" % "0.13.1").excludeAll(
   Seq(
     "commons-io",
     "com.carrotsearch",
@@ -79,7 +79,7 @@ val tagOrHash = Def.setting {
   else tagName.value
 }
 
-pomExtra := {
+pomExtra := (
   <developers>
     <developer>
       <id>xuwei-k</id>
@@ -92,7 +92,7 @@ pomExtra := {
     <connection>scm:git:git@github.com:sbt-teavm/sbt-teavm.git</connection>
     <tag>{tagOrHash.value}</tag>
   </scm>
-}
+)
 
 homepage := Some(url("https://github.com/sbt-teavm/sbt-teavm"))
 
