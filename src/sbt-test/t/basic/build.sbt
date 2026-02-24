@@ -7,7 +7,7 @@ enablePlugins(SbtTeaVM)
 val stdOutFile = file("run_std_out")
 val stdErrFile = file("run_std_err")
 
-TaskKey[Unit]("cleanTestOutFiles") := {
+InputKey[Unit]("cleanTestOutFiles") := {
   IO.delete(stdOutFile)
   IO.delete(stdErrFile)
 }

@@ -4,7 +4,7 @@ scalacOptions += "-deprecation"
 
 enablePlugins(SbtTeaVM)
 
-TaskKey[Unit]("check") := {
+InputKey[Unit]("check") := {
   if (scala.util.Properties.isLinux) {
     val dir = (teavmC / teavmBuildOption).value.targetDirectory
     val env = Seq[(String, String)](
