@@ -30,4 +30,4 @@ jobs:
     - run: wasmtime --version
     - run: node --version
     - run: npm --version
-    - run: sbt "+ test" scripted
+    - run: sbt "+ test" "+ scripted"
