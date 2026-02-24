@@ -141,11 +141,6 @@ enablePlugins(ContrabandPlugin)
 
 Compile / generateContrabands / contrabandScalaArray := "Seq"
 
-Compile / packageSrc / mappings ++= (Compile / managedSources).value.map { f =>
-  // to merge generated sources into sources.jar as well
-  (f, f.relativeTo((Compile / sourceManaged).value).get.getPath)
-}
-
 pluginCrossBuild / sbtVersion := {
   scalaBinaryVersion.value match {
     case "2.12" =>
