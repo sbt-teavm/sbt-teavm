@@ -26,7 +26,7 @@ jobs:
       with:
         tool_name: scala
         fail_on_error: true
-    - uses: bytecodealliance/actions/wasmtime/setup@6aecabac1eb1dcf7ed94ba9471974415ee2ebef2 # v1.1.2
+    - uses: bytecodealliance/actions/wasmtime/setup@9152e710e9f7182e4c29ad218e4f335a7b203613 # v1.1.3
     - run: wasmtime --version
     - run: node --version
     - run: npm --version
