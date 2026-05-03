@@ -1,15 +1,15 @@
-$ absent target/scala-2.13/teavm
+$ absent target/**/teavm
 > teavmC
-$ exists target/scala-2.13/teavm/c
+$ exists target/**/teavm/c
 
 > clean
-$ absent target/scala-2.13/teavm
+$ absent target/**/teavm
 
 > teavmJS/run js
-$ exists target/scala-2.13/teavm/js
-$ absent target/scala-2.13/teavm/c
-$ absent target/scala-2.13/teavm/wasm
-$ absent target/scala-2.13/teavm/wasi
+$ exists target/**/teavm/js
+$ absent target/**/teavm/c
+$ absent target/**/teavm/wasm
+$ absent target/**/teavm/wasi
 > checkRunOutput js
 -> checkRunOutput this test should fail
 > cleanTestOutFiles

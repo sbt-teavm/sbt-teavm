@@ -2,6 +2,8 @@ scalacOptions += "-deprecation"
 
 enablePlugins(SbtTeaVM)
 
+scalaVersion := "2.13.18"
+
 val stdOutFile = file("run_std_out")
 val stdErrFile = file("run_std_err")
 
