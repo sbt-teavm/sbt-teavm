@@ -55,8 +55,6 @@ object SbtTeaVM extends AutoPlugin {
   import autoImport.*
 
   private[this] val buildValues: Seq[(TaskKey[BuildResult], TeaVMTargetType)] = Seq(
-    teavmWasm -> TeaVMTargetType.WEBASSEMBLY,
-    teavmWasi -> TeaVMTargetType.WEBASSEMBLY_WASI,
     teavmJS -> TeaVMTargetType.JAVASCRIPT,
     teavmC -> TeaVMTargetType.C,
   )

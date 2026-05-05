@@ -9,7 +9,6 @@ $ absent target/scala-2.12/teavm
 $ exists target/scala-2.12/teavm/js
 $ absent target/scala-2.12/teavm/c
 $ absent target/scala-2.12/teavm/wasm
-$ absent target/scala-2.12/teavm/wasi
 > checkRunOutput js
 -> checkRunOutput this test should fail
 > cleanTestOutFiles
@@ -17,10 +16,4 @@ $ absent target/scala-2.12/teavm/wasi
 $ absent run_std_out
 $ absent run_std_err
 
-> teavmWasm/run wasm
-> checkRunOutput wasm
-> cleanTestOutFiles
-
-> teavmWasi/run wasi
-> checkRunOutput wasi
 > cleanTestOutFiles

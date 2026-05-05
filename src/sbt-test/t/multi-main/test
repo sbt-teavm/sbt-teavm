@@ -1,22 +1,8 @@
 -> teavmC
 -> teavmJS
 -> teavmWasm
--> teavmWasi
 
 -> teavmJS/run js
--> teavmWasi/run wasi
-
-# TODO
-# -> teavmWasm/run wasm
-
-> cleanTestOutFiles
-
-> teavmWasi/runMain example.MainOK wasi
-> checkRunOutput wasi
-
--> teavmWasi/runMain example.MainNG wasi
--> teavmWasi/runMain NotExistsClassName wasi
--> teavmWasi/runMain
 
 > cleanTestOutFiles
 
@@ -28,6 +14,3 @@
 -> teavmJS/runMain
 
 > cleanTestOutFiles
-
-> teavmWasm/runMain example.MainOK wasm
-> checkRunOutput wasm

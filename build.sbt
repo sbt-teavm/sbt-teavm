@@ -22,7 +22,7 @@ scriptedLaunchOpts ++= Seq[(String, String)](
 
 enablePlugins(SbtPlugin)
 
-val teavmTooling = ("org.teavm" % "teavm-tooling" % "0.13.1").excludeAll(
+val teavmTooling = ("org.teavm" % "teavm-tooling" % "0.14.0").excludeAll(
   Seq(
     "commons-io",
     "com.carrotsearch",
