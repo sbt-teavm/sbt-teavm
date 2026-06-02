@@ -1,4 +1,4 @@
-def sbt2 = "2.0.0-RC13"
+def sbt2 = "2.0.0-RC14"
 
 name := "sbt-teavm"
 
