@@ -23,7 +23,7 @@ jobs:
         cache: sbt
     - run: sbt scalafmtSbt "+ scalafixAll" "+ scalafmtAll"
     - run: git diff --exit-code
-    - uses: reviewdog/action-suggester@aa38384ceb608d00f84b4690cacc83a5aba307ff # v1.19.0
+    - uses: reviewdog/action-suggester@2558ba17e65a9039e73764a73009fc05fef28a46 # v1.19.0
       if: failure()
       with:
         tool_name: scala
