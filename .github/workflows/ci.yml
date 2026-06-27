@@ -30,4 +30,8 @@ jobs:
         fail_on_error: true
     - run: node --version
     - run: npm --version
-    - run: sbt "+ test" scripted
+    - run: sbt
+           -v
+           --server
+           "+ test"
+           scripted
