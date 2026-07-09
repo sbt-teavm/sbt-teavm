@@ -319,10 +319,11 @@ object SbtTeaVM extends AutoPlugin {
 
               runImpl.run(
                 args = args,
-                build = Def.task {
-                  val s = state.value.appendWithSession(Seq(key / mainClass := Some(mainClassName)))
-                  Project.extract(s).runTask(key, s)._2
-                },
+                build =
+                  Def.task {
+                    val s = state.value.appendWithSession(Seq(key / mainClass := Some(mainClassName)))
+                    Project.extract(s).runTask(key, s)._2
+                  },
                 taskName = Keys.runMain.key.label,
                 runLogger = teavmRunOption.value.logger,
               )
